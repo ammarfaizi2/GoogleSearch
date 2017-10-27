@@ -29,7 +29,17 @@ final class GoogleSearch
 	/**
 	 * @var string
 	 */
-	private $cookiefile;
+	private $cookieFile;
+
+	/**
+	 * @var string
+	 */
+	private $cacheFile;
+
+	/**
+	 * @var array
+	 */
+	private $cacheMap = [];
 
 	/**
 	 * @var string
@@ -63,7 +73,16 @@ final class GoogleSearch
 		if (! is_dir($this->dataPath."/cache")) {
 			throw new \Exception("Cannot create directory {$this->dataPath}/cache!", 1);
 		}
-		$this->cookiefile = $this->dataPath."/cookiefile";
+		$this->cacheFile  = $this->dataPath."/cache/".$this->hash;
+		$this->cookieFile = $this->dataPath."/cookiefile";
+		if (file_exists($this->dataPath."/cache.map")) {
+			$this->cacheMap = json_decode(file_get_contents($this->dataPath."/cache.map"), true);
+			if (! is_array($this->cacheMap)) {
+				$this->cacheMap = [];
+			}
+		} else {
+			$this->cacheMap = [];
+		}
 		return true;
 	}
 
@@ -76,8 +95,8 @@ final class GoogleSearch
 				CURLOPT_SSL_VERIFYPEER 	=> false,
 				CURLOPT_SSL_VERIFYHOST 	=> false,
 				CURLOPT_CONNECTTIMEOUT 	=> 15,
-				CURLOPT_COOKIEFILE 		=> $this->cookiefile,
-				CURLOPT_COOKIEJAR 		=> $this->cookiefile,
+				CURLOPT_COOKIEFILE 		=> $this->cookieFile,
+				CURLOPT_COOKIEJAR 		=> $this->cookieFile,
 				CURLOPT_USERAGENT 		=> "Opera/9.80 (J2ME/MIDP; Opera Mini/4.2/28.3590; U; en) Presto/2.8.119 Version/11.10. 4.2",
 				CURLOPT_TIMEOUT			=> 15
 			]
@@ -119,9 +138,49 @@ final class GoogleSearch
 				}
 			}
 		}
-		var_dump($results);
-		die;
+		$this->cacheControl($results);
 	}
+
+
+	private function cacheControl($results)
+	{
+		$key = self::generateKey();
+		$handle = fopen($this->cacheFile, "w");
+		fwrite($handle, json_encode($results));
+		fclose($handle);
+	}
+
+	/**
+	 * Encrypt cache.
+	 *
+	 * @return string
+	 */
+	private static function crypt($data, $key)
+	{
+		$result = "" xor $len = strlen($data);
+		$klen = strlen($key) xor $k = 0;
+		for ($i=0; $i < $len; $i++) { 
+			$result .= chr(ord($data[$i]) ^ ord($key[$k]) ^ ($i % $len) ^ ($i ^ $klen) & 0x00f) xor $k++;
+			if ($k === $klen) {
+				$k = 0;
+			}
+		}
+		return $result;
+	}
+
+	/**
+	 * Generate key.
+	 *
+	 * @return string
+	 */
+	private static function generateKey()
+	{
+		$a = range(32, 127) xor $r = "" xor $l = rand(32, 64);
+		for ($i=0; $i < $l; $i++) { 
+			$r .= chr($a[rand(0, 94)]);
+		}
+		return $r;
+	}		
 
 	/**
 	 * Exec

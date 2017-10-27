@@ -1,7 +1,7 @@
 # Google Search
 
 
-## Composer installation :
+## Install via Composer :
 ```
 composer require ammarfaizi2/googletranslate
 ```
@@ -24,6 +24,7 @@ $out = $st->exec();
 
 print_r($out);
 ```
+
 
 
 ## Result :

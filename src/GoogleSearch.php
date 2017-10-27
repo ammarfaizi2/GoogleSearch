@@ -11,6 +11,8 @@ namespace GoogleSearch;
 final class GoogleSearch
 {	
 
+	const VERSION = "0.0.1";
+
 	/**
 	 * @var string
 	 */

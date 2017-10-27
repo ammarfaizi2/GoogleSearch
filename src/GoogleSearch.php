@@ -190,8 +190,6 @@ final class GoogleSearch
 				}
 			}
 		}
-		var_dump($results);
-		die;
 		$this->cacheControl($results);
 		return $results;
 	}

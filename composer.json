@@ -1,6 +1,12 @@
 {
     "name": "ammarfaizi2/googlesearch",
     "description": "Google Search",
+    "keywords": [
+        "google-search",
+        "google", 
+        "search",
+        "search-engine"
+    ],
     "type": "library",
     "license": "MIT",
     "authors": [

@@ -3,7 +3,7 @@
 
 ## Install via Composer :
 ```
-composer require ammarfaizi2/googletranslate
+composer require ammarfaizi2/googlesearch
 ```
 
 

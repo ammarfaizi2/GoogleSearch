@@ -10,4 +10,4 @@ $query = "phpunit";
 $st = new GoogleSearch($query);
 $out = $st->exec();
 
-var_dump($out);
+print_r($out);

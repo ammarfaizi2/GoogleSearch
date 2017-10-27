@@ -117,7 +117,7 @@ final class GoogleSearch
 			file_put_contents("a.tmp", $out);*/
 			// return $out;
 		}
-		return file_get_contents("a.tmp");
+		// return file_get_contents("a.tmp");
 	}
 
 	private function isCached()
@@ -153,7 +153,7 @@ final class GoogleSearch
 	{
 		$a = explode("<div class=\"_Z1m\">", $out);
 		if (count($a) < 3) {
-			$this->errorInfo();
+			$this->errorInfo = "Not Found";
 			return false;
 		}
 		unset($a[0], $a[1], $out);

@@ -42,6 +42,11 @@ final class GoogleSearch
 	private $cacheMap = [];
 
 	/**
+	 * @var array
+	 */
+	private $cache = [];
+
+	/**
 	 * @var bool
 	 */
 	private $isCachedPerfectly = false;
@@ -97,6 +102,7 @@ final class GoogleSearch
 	private function search()
 	{
 		if ($this->isCached() && $this->isPerfectCache()) {
+			$this->isCachedPerfectly = true;
 			return $this->getCache();
 		} else {
 			/*$ch = curl_init("https://www.google.com/search?client=ubuntu&channel=fs&q=".urlencode($this->query)."&ie=utf-8&oe=utf-8");
@@ -138,15 +144,20 @@ final class GoogleSearch
 		$cache = json_decode(
 			self::crypt(
 				file_get_contents($this->cacheFile), 
-				$this->cacheMap[$this->hash][0]
+				$this->cacheMap[$this->hash][1]
 			), true
 		);
 
 		if (! is_array($cache)) {
 			return false;
 		}
-
+		$this->cache = $cache;
 		return true;
+	}
+
+	private function getCache()
+	{
+		return $this->cache;
 	}
 
 	private function parseOutput($out)

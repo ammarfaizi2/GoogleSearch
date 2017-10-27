@@ -10,5 +10,4 @@ $query = "es teh";
 $st = new GoogleSearch($query);
 $out = $st->exec();
 
-echo $out;
-echo "\n";
+print_r($out);

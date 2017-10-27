@@ -99,15 +99,24 @@ final class GoogleSearch
 		unset($a[0], $a[1]);
 		$results = [];
 		foreach ($a as $val) {
-			// get url
 			$b = explode("<a class=\"_Olt _bCp\" href=\"/url?q=", $val, 2);
 			if (isset($b[1])) {
 				$b = explode("\"", $b[1], 2);
 				$b = explode("&amp;", $b[0], 2);
-				$c = "";
-				$results[] = [
-					"url" => html_entity_decode($b[0], ENT_QUOTES, 'UTF-8')
-				];
+				$c = explode("<div aria-level=\"3\" class=\"_H1m _ees\" role=\"heading\">", $val, 2);
+				if (isset($c[1])) {
+					$c = explode("<", $c[1], 2);
+					$d = explode("<div class=\"_H1m _kup\">", $val);
+					if (isset($d[1])) {
+						$d = explode("</div>", $d[1]);
+						$d[0] = trim(strip_tags($d[0]));
+						$results[] = [
+							"url"		 	=> trim(html_entity_decode($b[0], ENT_QUOTES, 'UTF-8')),
+							"heading"	 	=> trim(html_entity_decode($c[0], ENT_QUOTES, 'UTF-8')),
+							"description"	=> trim(html_entity_decode($d[0], ENT_QUOTES, 'UTF-8')),
+						];
+					}
+				}
 			}
 		}
 		var_dump($results);

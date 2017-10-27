@@ -42,6 +42,11 @@ final class GoogleSearch
 	private $cacheMap = [];
 
 	/**
+	 * @var bool
+	 */
+	private $isCachedPerfectly = false;
+
+	/**
 	 * @var string
 	 */
 	private $errorInfo;
@@ -91,24 +96,57 @@ final class GoogleSearch
 
 	private function search()
 	{
-		/*$ch = curl_init("https://www.google.com/search?client=ubuntu&channel=fs&q=".urlencode($this->query)."&ie=utf-8&oe=utf-8");
-		curl_setopt_array($ch, 
-			[
-				CURLOPT_RETURNTRANSFER 	=> true,
-				CURLOPT_SSL_VERIFYPEER 	=> false,
-				CURLOPT_SSL_VERIFYHOST 	=> false,
-				CURLOPT_CONNECTTIMEOUT 	=> 15,
-				CURLOPT_COOKIEFILE 		=> $this->cookieFile,
-				CURLOPT_COOKIEJAR 		=> $this->cookieFile,
-				CURLOPT_USERAGENT 		=> "Opera/9.80 (J2ME/MIDP; Opera Mini/4.2/28.3590; U; en) Presto/2.8.119 Version/11.10. 4.2",
-				CURLOPT_TIMEOUT			=> 15
-			]
-		);
-		$out = curl_exec($ch);
-		$no  = curl_errno($ch) and $out = "Error ({$no}) : ".curl_error($ch);
-		file_put_contents("a.tmp", $out);*/
-		// return $out;
+		if ($this->isCached() && $this->isPerfectCache()) {
+			return $this->getCache();
+		} else {
+			/*$ch = curl_init("https://www.google.com/search?client=ubuntu&channel=fs&q=".urlencode($this->query)."&ie=utf-8&oe=utf-8");
+			curl_setopt_array($ch, 
+				[
+					CURLOPT_RETURNTRANSFER 	=> true,
+					CURLOPT_SSL_VERIFYPEER 	=> false,
+					CURLOPT_SSL_VERIFYHOST 	=> false,
+					CURLOPT_CONNECTTIMEOUT 	=> 15,
+					CURLOPT_COOKIEFILE 		=> $this->cookieFile,
+					CURLOPT_COOKIEJAR 		=> $this->cookieFile,
+					CURLOPT_USERAGENT 		=> "Opera/9.80 (J2ME/MIDP; Opera Mini/4.2/28.3590; U; en) Presto/2.8.119 Version/11.10. 4.2",
+					CURLOPT_TIMEOUT			=> 15
+				]
+			);
+			$out = curl_exec($ch);
+			$no  = curl_errno($ch) and $out = "Error ({$no}) : ".curl_error($ch);
+			file_put_contents("a.tmp", $out);*/
+			// return $out;
+		}
 		return file_get_contents("a.tmp");
+	}
+
+	private function isCached()
+	{
+		return isset($this->cacheMap[$this->hash]);
+	}
+
+	private function isPerfectCache()
+	{
+		if (
+			! file_exists($this->cacheFile) or
+			! isset($this->cacheMap[$this->hash][0]) or 
+			! isset($this->cacheMap[$this->hash][1])
+		) {
+			return false;
+		}
+
+		$cache = json_decode(
+			self::crypt(
+				file_get_contents($this->cacheFile), 
+				$this->cacheMap[$this->hash][0]
+			), true
+		);
+
+		if (! is_array($cache)) {
+			return false;
+		}
+
+		return true;
 	}
 
 	private function parseOutput($out)
@@ -198,6 +236,11 @@ final class GoogleSearch
 	public function exec()
 	{
 		$out = $this->search();
-		return $this->errorInfo ? $this->errorInfo : $this->parseOutput($out);
+		return 
+			$this->errorInfo ? 
+				$this->errorInfo : 
+					($this->isCachedPerfectly ?
+						$out : 
+							$this->parseOutput($out));
 	}
 }

@@ -140,6 +140,10 @@ final class GoogleSearch
 			return false;
 		}
 
+		if ($this->cacheMap[$this->hash][0] + 0x069780 < time()) {
+			return false;
+		}
+
 		$cache = json_decode(
 			self::crypt(
 				file_get_contents($this->cacheFile), 

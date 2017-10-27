@@ -120,10 +120,9 @@ final class GoogleSearch
 			);
 			$out = curl_exec($ch);
 			$no  = curl_errno($ch) and $out = "Error ({$no}) : ".curl_error($ch);
-			file_put_contents("a.tmp", $out);*/
-			// return $out;
+			return $out;*/
 		}
-		// return file_get_contents("a.tmp");
+		return file_get_contents("a.tmp");
 	}
 
 	private function isCached()
@@ -174,8 +173,9 @@ final class GoogleSearch
 			if (isset($b[1])) {
 				$b = explode("\"", $b[1], 2);
 				$b = explode("&amp;", $b[0], 2);
-				$c = explode("<div aria-level=\"3\" class=\"_H1m _ees\" role=\"heading\">", $val, 2);
+				$c = explode("\"_H1m _ees", $val, 2);
 				if (isset($c[1])) {
+					$c = explode(">", $c[1], 2);
 					$c = explode("<", $c[1], 2);
 					$d = explode("<div class=\"_H1m _kup\">", $val);
 					if (isset($d[1])) {
@@ -190,6 +190,8 @@ final class GoogleSearch
 				}
 			}
 		}
+		var_dump($results);
+		die;
 		$this->cacheControl($results);
 		return $results;
 	}
@@ -203,7 +205,7 @@ final class GoogleSearch
 		fclose($handle);
 		$this->cacheMap[$this->hash] = [time(), $key];
 		$handle = fopen($this->dataPath."/cache.map", "w");
-		fwrite($handle, json_encode($this->cacheMap, 128));
+		fwrite($handle, json_encode($this->cacheMap));
 		fclose($handle);
 	}
 

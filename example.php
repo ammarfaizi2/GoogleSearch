@@ -5,7 +5,7 @@ require "src/GoogleSearch.php";
 use GoogleSearch\GoogleSearch;
 
 
-$query = "es teh";
+$query = "ammar faizi";
 
 $st = new GoogleSearch($query);
 $out = $st->exec();

@@ -105,7 +105,7 @@ final class GoogleSearch
 			$this->isCachedPerfectly = true;
 			return $this->getCache();
 		} else {
-			/*$ch = curl_init("https://www.google.com/search?client=ubuntu&channel=fs&q=".urlencode($this->query)."&ie=utf-8&oe=utf-8");
+			$ch = curl_init("https://www.google.com/search?client=ubuntu&channel=fs&q=".urlencode($this->query)."&ie=utf-8&oe=utf-8");
 			curl_setopt_array($ch, 
 				[
 					CURLOPT_RETURNTRANSFER 	=> true,
@@ -120,9 +120,9 @@ final class GoogleSearch
 			);
 			$out = curl_exec($ch);
 			$no  = curl_errno($ch) and $out = "Error ({$no}) : ".curl_error($ch);
-			return $out;*/
+			return $out;
 		}
-		return file_get_contents("a.tmp");
+		// return file_get_contents("a.tmp");
 	}
 
 	private function isCached()

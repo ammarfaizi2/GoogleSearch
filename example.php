@@ -5,9 +5,9 @@ require "src/GoogleSearch.php";
 use GoogleSearch\GoogleSearch;
 
 
-$query = "es teh";
+$query = "phpunit";
 
 $st = new GoogleSearch($query);
 $out = $st->exec();
 
-print_r($out);
+var_dump($out);

@@ -99,6 +99,11 @@ final class GoogleSearch
 		return true;
 	}
 
+	/**
+	 * Search
+	 *
+	 * @return mixed
+	 */
 	private function search()
 	{
 		if ($this->isCached() && $this->isPerfectCache()) {
@@ -125,11 +130,17 @@ final class GoogleSearch
 		// return file_get_contents("a.tmp");
 	}
 
+	/**
+	 * @return bool
+	 */
 	private function isCached()
 	{
 		return isset($this->cacheMap[$this->hash]);
 	}
 
+	/**
+	 * @return bool
+	 */
 	private function isPerfectCache()
 	{
 		if (
@@ -158,11 +169,20 @@ final class GoogleSearch
 		return true;
 	}
 
+	/**
+	 * @return array
+	 */
 	private function getCache()
 	{
 		return $this->cache;
 	}
 
+	/**
+	 * Parse data.
+	 *
+	 * @param string $out
+	 * @return array
+	 */
 	private function parseOutput($out)
 	{
 		$a = explode("<div class=\"_Z1m\">", $out);
@@ -170,7 +190,7 @@ final class GoogleSearch
 			$this->errorInfo = "Not Found";
 			return false;
 		}
-		unset($a[0], $a[1], $out);
+		unset($a[0], $out);
 		$results = [];
 		foreach ($a as $val) {
 			$b = explode("<a class=\"_Olt _bCp\" href=\"/url?q=", $val, 2);
@@ -198,7 +218,9 @@ final class GoogleSearch
 		return $results;
 	}
 
-
+	/**
+	 * @param array $results
+	 */
 	private function cacheControl($results)
 	{
 		$key = self::generateKey();

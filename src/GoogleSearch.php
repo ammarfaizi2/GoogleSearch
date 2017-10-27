@@ -81,6 +81,9 @@ final class GoogleSearch
 				$this->cacheMap = [];
 			}
 		} else {
+			$handle = fopen($this->dataPath."/cache.map", "w");
+			fwrite($handle, "[]");
+			fclose($handle);
 			$this->cacheMap = [];
 		}
 		return true;
@@ -115,7 +118,7 @@ final class GoogleSearch
 			$this->errorInfo();
 			return false;
 		}
-		unset($a[0], $a[1]);
+		unset($a[0], $a[1], $out);
 		$results = [];
 		foreach ($a as $val) {
 			$b = explode("<a class=\"_Olt _bCp\" href=\"/url?q=", $val, 2);
@@ -139,6 +142,7 @@ final class GoogleSearch
 			}
 		}
 		$this->cacheControl($results);
+		return $results;
 	}
 
 
@@ -146,7 +150,11 @@ final class GoogleSearch
 	{
 		$key = self::generateKey();
 		$handle = fopen($this->cacheFile, "w");
-		fwrite($handle, json_encode($results));
+		fwrite($handle, self::crypt(json_encode($results), $key));
+		fclose($handle);
+		$this->cacheMap[$this->hash] = [time(), $key];
+		$handle = fopen($this->dataPath."/cache.map", "w");
+		fwrite($handle, json_encode($this->cacheMap, 128));
 		fclose($handle);
 	}
 

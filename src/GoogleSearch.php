@@ -198,12 +198,10 @@ final class GoogleSearch
 		foreach ($a as $val) {
 			$b = explode("<a class=\"_Olt _bCp\" href=\"/url?q=", $val, 2);
 			if (isset($b[1])) {
-				// var_dump(1);
 				$b = explode("\"", $b[1], 2);
 				$b = explode("&amp;", $b[0], 2);
 				$c = explode("\"_H1m _ees", $val, 2);
 				if (isset($c[1])) {
-					// var_dump(1);
 					$c = explode(">", $c[1], 2);
 					$c = explode("<", $c[1], 2);
 					$d = explode("<div>", $val, 2);
@@ -220,8 +218,8 @@ final class GoogleSearch
 					}
 				}
 			}
-		} // var_dump($results);
-		// $this->cacheControl($results);
+		}
+		$this->cacheControl($results);
 		return $results;
 	}
 

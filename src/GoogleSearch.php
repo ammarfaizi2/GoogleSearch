@@ -125,11 +125,12 @@ final class GoogleSearch
 					CURLOPT_TIMEOUT			=> 15
 				]
 			);
-			$out = curl_exec($ch);
-			$no  = curl_errno($ch) and $out = "Error ({$no}) : ".curl_error($ch);
-			return $out;
+			//$out = curl_exec($ch);
+			//$no  = curl_errno($ch) and $out = "Error ({$no}) : ".curl_error($ch);
+			//file_put_contents("a.tmp", $out);
+			//return $out;
 		}
-		// return file_get_contents("a.tmp");
+		return file_get_contents("a.tmp");
 	}
 
 	/**
@@ -197,14 +198,18 @@ final class GoogleSearch
 		foreach ($a as $val) {
 			$b = explode("<a class=\"_Olt _bCp\" href=\"/url?q=", $val, 2);
 			if (isset($b[1])) {
+				// var_dump(1);
 				$b = explode("\"", $b[1], 2);
 				$b = explode("&amp;", $b[0], 2);
 				$c = explode("\"_H1m _ees", $val, 2);
 				if (isset($c[1])) {
+					// var_dump(1);
 					$c = explode(">", $c[1], 2);
 					$c = explode("<", $c[1], 2);
-					$d = explode("<div class=\"_H1m _kup\">", $val);
+					$d = explode("<div>", $val, 2);
+					var_dump($d);
 					if (isset($d[1])) {
+						var_dump(1);
 						$d = explode("</div>", $d[1]);
 						$d[0] = trim(strip_tags($d[0]));
 						$results[] = [
@@ -215,8 +220,8 @@ final class GoogleSearch
 					}
 				}
 			}
-		}
-		$this->cacheControl($results);
+		} // var_dump($results);
+		// $this->cacheControl($results);
 		return $results;
 	}
 

@@ -9,9 +9,11 @@ namespace GoogleSearch;
  * @version 0.0.1
  */
 final class GoogleSearch
-{	
-
-	const VERSION = "0.0.1";
+{
+	/**
+	 * @var array
+	 */
+	private $out = [];
 
 	/**
 	 * @var string
@@ -31,11 +33,6 @@ final class GoogleSearch
 	/**
 	 * @var string
 	 */
-	private $cookieFile;
-
-	/**
-	 * @var string
-	 */
 	private $cacheFile;
 
 	/**
@@ -46,17 +43,12 @@ final class GoogleSearch
 	/**
 	 * @var array
 	 */
-	private $cache = [];
-
-	/**
-	 * @var bool
-	 */
-	private $isCachedPerfectly = false;
+	private $cacheData = [];
 
 	/**
 	 * @var string
 	 */
-	private $errorInfo;
+	private $cacheMapFile;
 
 	/**
 	 * Constructor.
@@ -66,15 +58,7 @@ final class GoogleSearch
 	public function __construct($query)
 	{
 		$this->query = $query;
-		$this->hash  = sha1($query);
-		$this->__init__();
-	}
-
-	/**
-	 * Init data.
-	 */
-	private function __init__()
-	{
+		$this->hash  = sha1(trim(strtolower($query)));
 		if (defined("data")) {
 			$this->dataPath = realpath(data)."/google_search_data";
 		} else {
@@ -82,55 +66,35 @@ final class GoogleSearch
 		}
 		is_dir($this->dataPath) or mkdir($this->dataPath);
 		is_dir($this->dataPath."/cache") or mkdir($this->dataPath."/cache");
+		if (! is_dir($this->dataPath)) {
+			throw new \Exception("Cannot create directory {$this->dataPath}", 1);
+		}
 		if (! is_dir($this->dataPath."/cache")) {
-			throw new \Exception("Cannot create directory {$this->dataPath}/cache!", 1);
+			throw new \Exception("Cannot create directory {$this->dataPath}/cache", 1);
 		}
-		$this->cacheFile  = $this->dataPath."/cache/".$this->hash;
-		$this->cookieFile = $this->dataPath."/cookiefile";
-		if (file_exists($this->dataPath."/cache.map")) {
-			$this->cacheMap = json_decode(file_get_contents($this->dataPath."/cache.map"), true);
-			if (! is_array($this->cacheMap)) {
-				$this->cacheMap = [];
-			}
-		} else {
-			$handle = fopen($this->dataPath."/cache.map", "w");
-			fwrite($handle, "[]");
-			fclose($handle);
-			$this->cacheMap = [];
+		if (! is_writable($this->dataPath)) {
+			throw new \Exception("{$this->dataPath} is not writeable", 1);
 		}
-		return true;
+		if (! is_writable($this->dataPath."/cache")) {
+			throw new \Exception("{$this->dataPath}/cache is not writeable", 1);
+		}
+		$this->cacheFile = $this->dataPath."/cache/".$this->hash;
+		$this->cookieFile = $this->dataPath."/cookies";
+		$this->cacheMapFile = $this->dataPath."/map";
+		$this->loadMap();
 	}
 
 	/**
-	 * Search
-	 *
-	 * @return mixed
+	 * Load cache map.
 	 */
-	private function search()
+	private function loadMap()
 	{
-		if ($this->isCached() && $this->isPerfectCache()) {
-			$this->isCachedPerfectly = true;
-			return $this->getCache();
+		if (file_exists($this->cacheMapFile)) {
+			$this->cacheMap = json_decode(file_get_contents($this->cacheMapFile), true);
+			$this->cacheMap = is_array($this->cacheMap) ? $this->cacheMap : [];
 		} else {
-			$ch = curl_init("https://www.google.com/search?client=ubuntu&channel=fs&q=".urlencode($this->query)."&ie=utf-8&oe=utf-8");
-			curl_setopt_array($ch, 
-				[
-					CURLOPT_RETURNTRANSFER 	=> true,
-					CURLOPT_SSL_VERIFYPEER 	=> false,
-					CURLOPT_SSL_VERIFYHOST 	=> false,
-					CURLOPT_CONNECTTIMEOUT 	=> 15,
-					CURLOPT_COOKIEFILE 		=> $this->cookieFile,
-					CURLOPT_COOKIEJAR 		=> $this->cookieFile,
-					CURLOPT_USERAGENT 		=> "Opera/9.80 (J2ME/MIDP; Opera Mini/4.2/28.3590; U; en) Presto/2.8.119 Version/11.10. 4.2",
-					CURLOPT_TIMEOUT			=> 15
-				]
-			);
-			//$out = curl_exec($ch);
-			//$no  = curl_errno($ch) and $out = "Error ({$no}) : ".curl_error($ch);
-			//file_put_contents("a.tmp", $out);
-			//return $out;
+			$this->cacheMap = [];
 		}
-		return file_get_contents("a.tmp");
 	}
 
 	/**
@@ -138,38 +102,13 @@ final class GoogleSearch
 	 */
 	private function isCached()
 	{
-		return isset($this->cacheMap[$this->hash]);
-	}
-
-	/**
-	 * @return bool
-	 */
-	private function isPerfectCache()
-	{
-		if (
-			! file_exists($this->cacheFile) or
-			! isset($this->cacheMap[$this->hash][0]) or 
-			! isset($this->cacheMap[$this->hash][1])
-		) {
-			return false;
+		if (isset($this->cacheMap[$this->hash]) && $this->cacheMap[$this->hash] > time()) {
+			if (file_exists($this->cacheFile)) {
+				$this->cacheData = json_decode(file_get_contents($this->cacheFile), true);
+				return is_array($this->cacheData);
+			}
 		}
-
-		if ($this->cacheMap[$this->hash][0] + 0x069780 < time()) {
-			return false;
-		}
-
-		$cache = json_decode(
-			self::crypt(
-				file_get_contents($this->cacheFile), 
-				$this->cacheMap[$this->hash][1]
-			), true
-		);
-
-		if (! is_array($cache)) {
-			return false;
-		}
-		$this->cache = $cache;
-		return true;
+		return false;
 	}
 
 	/**
@@ -177,20 +116,49 @@ final class GoogleSearch
 	 */
 	private function getCache()
 	{
-		return $this->cache;
+		return $this->cacheData;
 	}
 
 	/**
-	 * Parse data.
-	 *
-	 * @param string $out
 	 * @return array
+	 */
+	private function onlineSearch()
+	{
+		$ch = curl_init("https://www.google.co.id/search?q=".urlencode($this->query)."&btnG=&newwindow=1&safe=active");
+		curl_setopt_array($ch, 
+			[
+				CURLOPT_RETURNTRANSFER => true,
+				CURLOPT_SSL_VERIFYPEER => false,
+				CURLOPT_SSL_VERIFYHOST => false,
+				CURLOPT_FOLLOWLOCATION => true,
+				CURLOPT_COOKIEJAR	   => $this->cookieFile,
+				CURLOPT_COOKIEFILE	   => $this->cookieFile,
+				CURLOPT_TIMEOUT		   => 300,
+				CURLOPT_CONNECTTIMEOUT => 300,
+				CURLOPT_USERAGENT	   => "Opera/9.80 (Android; Opera Mini/19.0.2254/37.9389; U; en) Presto/2.12.423 Version/12.11"
+			]
+		);
+		$out = curl_exec($ch);
+		if ($ern = curl_errno($ch)) {
+			throw new \Exception("Error ({$ern}): ".curl_error($ch), 1);
+		}
+		curl_close($ch);
+		
+		// $out = file_get_contents("a.tmp"); // offline debug
+		
+		$this->parseOutput($out);
+		$this->writeCache();
+		return $this->out;
+	}
+
+	/**
+	 * @param string $out
 	 */
 	private function parseOutput($out)
 	{
 		$a = explode("<div class=\"_Z1m\">", $out);
 		if (count($a) < 3) {
-			$this->errorInfo = "Not Found";
+			$this->out = ["Not Found"];
 			return false;
 		}
 		unset($a[0], $out);
@@ -204,85 +172,40 @@ final class GoogleSearch
 				if (isset($c[1])) {
 					$c = explode(">", $c[1], 2);
 					$c = explode("<", $c[1], 2);
-					$d = explode("<div>", $val, 2);
-					var_dump($d);
-					if (isset($d[1])) {
-						var_dump(1);
-						$d = explode("</div>", $d[1]);
-						$d[0] = trim(strip_tags($d[0]));
-						$results[] = [
-							"url"		 	=> trim(html_entity_decode($b[0], ENT_QUOTES, 'UTF-8')),
-							"heading"	 	=> trim(html_entity_decode($c[0], ENT_QUOTES, 'UTF-8')),
-							"description"	=> trim(html_entity_decode($d[0], ENT_QUOTES, 'UTF-8')),
-						];
-					}
+					$d = explode("<div class=\"_H1m\">", $val, 2);
+					$d = explode("<", $d[1], 2);
+					$d[0] = trim(strip_tags($d[0]));
+					$results[] = [
+						"url"		 	=> trim(html_entity_decode($b[0], ENT_QUOTES, 'UTF-8')),
+						"heading"	 	=> trim(html_entity_decode($c[0], ENT_QUOTES, 'UTF-8')),
+						"description"	=> trim(html_entity_decode($d[0], ENT_QUOTES, 'UTF-8')),
+					];
 				}
 			}
 		}
-		$this->cacheControl($results);
-		return $results;
+		$this->out = $results;
 	}
 
 	/**
-	 * @param array $results
+	 * Write cache
 	 */
-	private function cacheControl($results)
+	private function writeCache()
 	{
-		$key = self::generateKey();
+		$this->cacheMap[$this->hash] = time() + (3600*24*14);
 		$handle = fopen($this->cacheFile, "w");
-		fwrite($handle, self::crypt(json_encode($results), $key));
+		flock($handle, LOCK_EX);
+		fwrite($handle, json_encode($this->out, JSON_UNESCAPED_SLASHES));
 		fclose($handle);
-		$this->cacheMap[$this->hash] = [time(), $key];
-		$handle = fopen($this->dataPath."/cache.map", "w");
+		$handle = fopen($this->cacheMapFile, "w");
 		fwrite($handle, json_encode($this->cacheMap));
 		fclose($handle);
 	}
 
 	/**
-	 * Encrypt cache.
-	 *
-	 * @return string
-	 */
-	private static function crypt($data, $key)
-	{
-		$result = "" xor $len = strlen($data);
-		$klen = strlen($key) xor $k = 0;
-		for ($i=0; $i < $len; $i++) { 
-			$result .= chr(ord($data[$i]) ^ ord($key[$k]) ^ ($i % $len) ^ ($i ^ $klen) & 0x00f) xor $k++;
-			if ($k === $klen) {
-				$k = 0;
-			}
-		}
-		return $result;
-	}
-
-	/**
-	 * Generate key.
-	 *
-	 * @return string
-	 */
-	private static function generateKey()
-	{
-		$a = range(32, 127) xor $r = "" xor $l = rand(32, 64);
-		for ($i=0; $i < $l; $i++) { 
-			$r .= chr($a[rand(0, 94)]);
-		}
-		return $r;
-	}		
-
-	/**
-	 * Exec
-	 * 
-	 * @return string
+	 * Exec.
 	 */
 	public function exec()
 	{
-		$out = $this->search();
-		return 
-			$this->errorInfo ? 
-				$this->errorInfo : 
-					($this->isCachedPerfectly ?
-						$out : 
-							$this->parseOutput($out));
+		return $this->isCached() ? $this->getCache() : $this->onlineSearch();
 	}
 }

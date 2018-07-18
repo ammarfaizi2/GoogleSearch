@@ -157,8 +157,9 @@ final class GoogleSearch
 	private function parseOutput($out)
 	{
 		// file_put_contents("test", $out);die;
-		$a = file_get_contents("test");
-		preg_match_all("/(?:<div><a.+href=\"\/url\?q=)(.*)\"(?:.+<div.+role=\"heading\".+>)(.*)(?:<\/div>.+<hr class=\".+\">)(.*)(?:<\/div>)/Usi", $a, $m);
+		// $a = file_get_contents("test");
+		preg_match_all("/(?:<div><a.+href=\"\/url\?q=)(.*)\"(?:.+<div.+role=\"heading\".+>)(.*)(?:<\/div>.+<hr class=\".+\">)(.*)(?:<\/div>)/Usi", $out, $m);
+		unset($out);
 		if (count($m[0]) < 1) {
 			$this->out = ["Not Found"];
 		} else {
@@ -170,7 +171,7 @@ final class GoogleSearch
 						$m[3][$k] = $t[1];
 					}
 					$results[] = [
-						"url" => html_entity_decode($v[0], ENT_QUOTES, "UTF-8"),
+						"url" => html_entity_decode(urldecode($v[0]), ENT_QUOTES, "UTF-8"),
 						"heading" => trim(html_entity_decode($m[2][$k], ENT_QUOTES, "UTF-8")),
 						"description" => trim(htmlspecialchars_decode(strip_tags($m[3][$k])))
 					];

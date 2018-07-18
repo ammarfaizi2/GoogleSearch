@@ -5,7 +5,7 @@ require "src/GoogleSearch.php";
 use GoogleSearch\GoogleSearch;
 
 
-$query = "php 7.2";
+$query = "hello world";
 
 $st = new GoogleSearch($query);
 $out = $st->exec();

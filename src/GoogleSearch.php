@@ -156,34 +156,28 @@ final class GoogleSearch
 	 */
 	private function parseOutput($out)
 	{
-		$a = explode("<div class=\"_Z1m\">", $out);
-		if (count($a) < 3) {
+		// file_put_contents("test", $out);die;
+		$a = file_get_contents("test");
+		preg_match_all("/(?:<div><a.+href=\"\/url\?q=)(.*)\"(?:.+<div.+role=\"heading\".+>)(.*)(?:<\/div>.+<hr class=\".+\">)(.*)(?:<\/div>)/Usi", $a, $m);
+		if (count($m[0]) < 1) {
 			$this->out = ["Not Found"];
-			return false;
-		}
-		unset($a[0], $out);
-		$results = [];
-		foreach ($a as $val) {
-			$b = explode("<a class=\"_Olt _bCp\" href=\"/url?q=", $val, 2);
-			if (isset($b[1])) {
-				$b = explode("\"", $b[1], 2);
-				$b = explode("&amp;", $b[0], 2);
-				$c = explode("\"_H1m _ees", $val, 2);
-				if (isset($c[1])) {
-					$c = explode(">", $c[1], 2);
-					$c = explode("<", $c[1], 2);
-					$d = explode("<div class=\"_H1m\">", $val, 2);
-					$d = explode("<", $d[1], 2);
-					$d[0] = trim(strip_tags($d[0]));
+		} else {
+			$results = [];
+			foreach ($m[1] as $k => $v) {
+				if (count($v = explode("&amp;", $v, 2)) > 1) {
+					$t = explode("\xc2\xb7", $m[3][$k]);
+					if (count($t) === 3) {
+						$m[3][$k] = $t[1];
+					}
 					$results[] = [
-						"url"		 	=> trim(html_entity_decode($b[0], ENT_QUOTES, 'UTF-8')),
-						"heading"	 	=> trim(html_entity_decode($c[0], ENT_QUOTES, 'UTF-8')),
-						"description"	=> trim(html_entity_decode($d[0], ENT_QUOTES, 'UTF-8')),
+						"url" => html_entity_decode($v[0], ENT_QUOTES, "UTF-8"),
+						"heading" => trim(html_entity_decode($m[2][$k], ENT_QUOTES, "UTF-8")),
+						"description" => trim(htmlspecialchars_decode(strip_tags($m[3][$k])))
 					];
 				}
 			}
+			$this->out = $results;
 		}
-		$this->out = $results;
 	}
 
 	/**
@@ -191,14 +185,16 @@ final class GoogleSearch
 	 */
 	private function writeCache()
 	{
-		$this->cacheMap[$this->hash] = time() + (3600*24*14);
-		$handle = fopen($this->cacheFile, "w");
-		flock($handle, LOCK_EX);
-		fwrite($handle, json_encode($this->out, JSON_UNESCAPED_SLASHES));
-		fclose($handle);
-		$handle = fopen($this->cacheMapFile, "w");
-		fwrite($handle, json_encode($this->cacheMap));
-		fclose($handle);
+		if ($this->out !== ["Not Found"]) {
+			$this->cacheMap[$this->hash] = time() + (3600*24*14);
+			$handle = fopen($this->cacheFile, "w");
+			flock($handle, LOCK_EX);
+			fwrite($handle, json_encode($this->out, JSON_UNESCAPED_SLASHES));
+			fclose($handle);
+			$handle = fopen($this->cacheMapFile, "w");
+			fwrite($handle, json_encode($this->cacheMap));
+			fclose($handle);
+		}
 	}
 
 	/**
